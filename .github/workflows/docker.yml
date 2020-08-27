@@ -25,4 +25,3 @@ jobs:
           tag_with_ref: true
           tag_with_sha: true
           dockerfile: Dockerfile
-          target: jupyterhub-official
