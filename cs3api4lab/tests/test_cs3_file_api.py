@@ -8,7 +8,6 @@ from cs3api4lab.cs3_file_api import Cs3FileApi
 
 
 class TestCs3FileApi(TestCase):
-
     userid = None
     endpoint = None
 
@@ -29,7 +28,6 @@ class TestCs3FileApi(TestCase):
             config = {
                 "revahost": config_parser.get('cs3', 'revahost'),
                 "authtokenvalidity": config_parser.get('cs3', 'authtokenvalidity'),
-                "userid": config_parser.get('cs3', 'userid'),
                 "endpoint": config_parser.get('cs3', 'endpoint'),
                 "secure_channel": config_parser.getboolean('cs3', 'secure_channel'),
                 "client_cert": config_parser.get('cs3', 'client_cert'),
@@ -38,6 +36,7 @@ class TestCs3FileApi(TestCase):
                 "chunksize": config_parser.get('io', 'chunksize'),
                 "client_id": config_parser.get('cs3', 'client_id'),
                 "client_secret": config_parser.get('cs3', 'client_secret'),
+                "home_dir": config_parser.get('cs3', 'home_dir'),
             }
 
             self.storage = Cs3FileApi(config, log)
@@ -105,10 +104,23 @@ class TestCs3FileApi(TestCase):
         with self.assertRaises(IOError):
             self.storage.stat(fileid, self.userid, self.endpoint)
 
+    def test_write_empty_file(self):
+
+        buffer = b""
+        fileid = "/zero_test_file.txt"
+
+        self.storage.write_file(fileid, self.userid, buffer, self.endpoint)
+
+        stat_info = self.storage.stat(fileid, self.userid, self.endpoint)
+        self.assertIsInstance(stat_info, dict)
+
+        self.storage.remove(fileid, self.userid, self.endpoint)
+        with self.assertRaises(IOError):
+            self.storage.stat(fileid, self.userid, self.endpoint)
 
     def test_write_example(self):
 
-        buffer = b"Example from cs3 API"
+        buffer = b"Example from cs3 API (Test X22)"
         fileid = "/example1.txt"
         self.storage.write_file(fileid, self.userid, buffer, self.endpoint)
 
@@ -181,6 +193,7 @@ class TestCs3FileApi(TestCase):
         self.storage.remove(dest_id, self.userid, self.endpoint)
         with self.assertRaises(IOError):
             self.storage.stat(dest_id, self.userid, self.endpoint)
+
 
 if __name__ == '__main__':
     unittest.main()

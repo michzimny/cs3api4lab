@@ -1,3 +1,4 @@
+import os
 from base64 import decodebytes
 from datetime import datetime
 
@@ -26,23 +27,38 @@ class CS3APIsManager(ContentsManager):
     log = None
     cs3_endpoint = None
 
-    def __init__(self, parent, log):
+    def __init__(self, parent, log, external_config=None):
 
         #
         # Get config from jupyter_cs3_config.json file
         #
-        config_path = jupyter_config_path()
-        if self.cs3_config_dir not in config_path:
-            # add self.config_dir to the front, if set manually
-            config_path.insert(0, self.cs3_config_dir)
-        cm = ConfigManager(read_config_path=config_path)
+        if external_config is None:
+            config_path = jupyter_config_path()
+            if self.cs3_config_dir not in config_path:
+                # add self.config_dir to the front, if set manually
+                config_path.insert(0, self.cs3_config_dir)
+            cm = ConfigManager(read_config_path=config_path)
 
-        cs3_config_file = cm.get('jupyter_cs3_config')
-        self.cs3_config = cs3_config_file.get("cs3")
+            cs3_config_file = cm.get('jupyter_cs3_config')
+            self.cs3_config = cs3_config_file.get("cs3")
 
-        if self.cs3_config is None:
-            log.error(u'Error while reading cs3 config file')
-            raise IOError(u'Error while reading cs3 config file')
+            if self.cs3_config is None:
+                log.error(u'Error while reading cs3 config file')
+                raise IOError(u'Error while reading cs3 config file')
+
+            #
+            # Overwriting configuration values with environment variables
+            #
+            env_names = {"revahost", "client_id", "client_secret", "home_dir"}
+            for name in env_names:
+                env_name = "CS3_" + name.upper()
+                if env_name in os.environ:
+                    log.debug(f"Overwriting config value {name}")
+                    self.cs3_config[name] = os.environ[env_name]
+
+        else:
+
+            self.cs3_config = external_config
 
         self.cs3_endpoint = self.cs3_config["endpoint"]
         self.log = log
@@ -185,10 +201,8 @@ class CS3APIsManager(ContentsManager):
 
         elif model['type'] == 'file':
             model = self._file_model(path, content=False, format=None)
-
         elif model['type'] == 'directory':
             model = self._dir_model(path, content=False)
-
         if validation_message:
             model['message'] = validation_message
 
@@ -507,3 +521,27 @@ class CS3APIsManager(ContentsManager):
             raise web.HTTPError(400, u'Not a directory %s' % path)
 
         self._cs3_file_api().create_directory(path, self.cs3_user_id, self.cs3_endpoint)
+
+    #
+    # Notebook hack - disable checkpoint
+    #
+    def delete(self, path):
+        path = path.strip('/')
+        if not path:
+            raise web.HTTPError(400, "Can't delete root")
+        self.delete_file(path)
+
+    def rename(self, old_path, new_path):
+        self.rename_file(old_path, new_path)
+
+    def create_checkpoint(self, path):
+        return {'id': 'checkpoint', 'last_modified': "0"}
+
+    def restore_checkpoint(self, checkpoint_id, path):
+        pass
+
+    def list_checkpoints(self, path):
+        return [{'id': 'checkpoint', 'last_modified': "0"}]
+
+    def delete_checkpoint(self, checkpoint_id, path):
+        pass

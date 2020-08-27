@@ -34,6 +34,7 @@ class TestCS3APIsManager(TestCase):
                 "authtokenvalidity": config_parser.get('cs3', 'authtokenvalidity'),
                 "userid": config_parser.get('cs3', 'userid'),
                 "endpoint": config_parser.get('cs3', 'endpoint'),
+                "home_dir": config_parser.get('cs3', 'home_dir'),
                 "secure_channel": config_parser.getboolean('cs3', 'secure_channel'),
                 "client_cert": config_parser.get('cs3', 'client_cert'),
                 "client_key": config_parser.get('cs3', 'client_key'),
@@ -49,7 +50,7 @@ class TestCS3APIsManager(TestCase):
             log.error("Missing option or missing configuration, check the test.conf file")
             raise
 
-        self.contents_manager = CS3APIsManager(self, log)
+        self.contents_manager = CS3APIsManager(self, log, config)
 
     def test_get_text_file(self):
 
