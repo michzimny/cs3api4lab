@@ -44,7 +44,7 @@ RUN fix-permissions "/home/${NB_USER}"
 	
 EXPOSE 8888
 
-ENTRYPOINT ["jupyter", "lab", "--ip=0.0.0.0", "--allow-root", "--no-browser"]
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--allow-root", "--no-browser"]
 	
 USER $NB_UID
 
